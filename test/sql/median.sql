@@ -1,3 +1,12 @@
+CREATE TABLE floatvals(val float, color text);
+
+INSERT INTO floatvals VALUES
+       (1.4, 'a'),
+       (2.7790234, 'c');
+
+SELECT * FROM floatvals ORDER BY val;
+SELECT median(val) FROM floatvals;
+
 CREATE TABLE intvals(val int, color text);
 
 -- Test empty table
@@ -16,6 +25,15 @@ INSERT INTO intvals VALUES
 SELECT * FROM intvals ORDER BY val;
 SELECT median(val) FROM intvals;
 
+-- Integers with even number of values
+INSERT INTO intvals VALUES
+       (0, 'a'),
+       (1, 'b'),
+       (-5, 'd');
+
+SELECT * FROM intvals ORDER BY val;
+SELECT median(val) FROM intvals;
+
 -- Integers with NULLs and even number of values
 INSERT INTO intvals VALUES
        (99, 'a'),
@@ -23,7 +41,8 @@ INSERT INTO intvals VALUES
        (NULL, 'e'),
        (NULL, 'b'),
        (7, 'c'),
-       (0, 'd');
+       (0, 'd'),
+       (8, 'e');
 
 SELECT * FROM intvals ORDER BY val;
 SELECT median(val) FROM intvals;
