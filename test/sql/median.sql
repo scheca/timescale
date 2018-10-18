@@ -1,8 +1,14 @@
 CREATE TABLE floatvals(val float, color text);
 
 INSERT INTO floatvals VALUES
-       (1.4, 'a'),
-       (2.7790234, 'c');
+       (2.7790234, 'c'),
+       (1.4, 'a');
+
+SELECT * FROM floatvals ORDER BY val;
+SELECT median(val) FROM floatvals;
+
+INSERT INTO floatvals VALUES
+       (-3.14159, 'b');
 
 SELECT * FROM floatvals ORDER BY val;
 SELECT median(val) FROM floatvals;
