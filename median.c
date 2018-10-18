@@ -34,7 +34,7 @@ median_transfn(PG_FUNCTION_ARGS)
 	MemoryContext agg_context;
 	MemoryContext old_context;
 	Oid			oper_oid;
-	Oid			collation_oid;
+	Oid			collation_oid = fcinfo->fncollation;
 	Oid			element_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	MedianState *median_state;
 
@@ -51,7 +51,6 @@ median_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		collation_oid = CollationGetCollid("en_US");
 		median_state = (MedianState *) palloc0(sizeof(MedianState));
 		median_state->element_type = element_type;
 		old_context = MemoryContextSwitchTo(MemoryContextGetParent(agg_context));
