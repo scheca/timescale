@@ -3,6 +3,7 @@
 #include <catalog/namespace.h>
 #include <catalog/pg_type.h>
 #include <nodes/value.h>
+#include <utils/memutils.h>
 #include <utils/tuplesort.h>
 
 typedef struct MedianState
@@ -31,6 +32,7 @@ Datum
 median_transfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext agg_context;
+	MemoryContext old_context;
 	Oid			oper_oid;
 	Oid			collation_oid;
 	Oid			element_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
@@ -42,8 +44,7 @@ median_transfn(PG_FUNCTION_ARGS)
 	if (!OidIsValid(element_type))
 		elog(ERROR, "could not determine data type of input");
 
-	oper_oid = OpernameGetOprid(list_make1(makeString("<")),
-								element_type, element_type);
+	oper_oid = OpernameGetOprid(list_make1(makeString("<")), element_type, element_type);
 
 	if (!OidIsValid(oper_oid))
 		elog(ERROR, "input data type cannot be sorted");
@@ -53,8 +54,9 @@ median_transfn(PG_FUNCTION_ARGS)
 		collation_oid = CollationGetCollid("en_US");
 		median_state = (MedianState *) palloc0(sizeof(MedianState));
 		median_state->element_type = element_type;
-		median_state->sort_state = tuplesort_begin_datum(
-														 element_type, oper_oid, collation_oid, false, 64 * (int64) 1024, false);
+		old_context = MemoryContextSwitchTo(MemoryContextGetParent(agg_context));
+		median_state->sort_state = tuplesort_begin_datum(element_type, oper_oid, collation_oid, false, 64 * (int64) 1024, NULL, true);
+		MemoryContextSwitchTo(old_context);
 	}
 	else
 		median_state = (MedianState *) PG_GETARG_POINTER(0);
@@ -83,6 +85,7 @@ median_finalfn(PG_FUNCTION_ARGS)
 {
 	MemoryContext agg_context;
 	MedianState *median_state;
+	Datum		median;
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "median_finalfn called in non-aggregate context");
@@ -98,9 +101,10 @@ median_finalfn(PG_FUNCTION_ARGS)
 		tuplesort_performsort(median_state->sort_state);
 	}
 
-	/* tuplesort_end(sort_state); */
+	median = calculate_median(median_state);
+	tuplesort_end(median_state->sort_state);
 
-	return calculate_median(median_state);
+	return median;
 }
 
 static Datum
